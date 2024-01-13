@@ -143,7 +143,24 @@ class FeedbackPage(tk.Frame):
         self.switch_page_callback = switch_page_callback
 
         self.label = tk.Label(self, text="Feedback")
+        self.label.pack(pady=10)
+
+        self.feedback_text = tk.Text(self, height=5, width=40)
+        self.feedback_text.pack(pady=10)
+
+        self.submit_button = tk.Button(self, text="Submit Feedback", command=self.submit_feedback)
+        self.submit_button.pack()
+
+        self.back_button = tk.Button(self, text="Back", command=self.back_to_choose_page)
+        self.back_button.pack()
+
+    def submit_feedback(self):
+        feedback = self.feedback_text.get("1.0", tk.END).strip()
+        messagebox.showinfo("Feedback Submitted", "Thank you for your feedback!")
+
+    def back_to_choose_page(self):
+        self.switch_page_callback(ChoosePage)
+
 if __name__ == "__main__":
     login_app = LoginApp()
     login_app.mainloop()
-    FeedbackPage = FeedbackPage()
