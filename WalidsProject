@@ -1,0 +1,149 @@
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import filedialog
+
+class User:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+class GroceryList:
+    def __init__(self):
+        self.items = []
+
+    def load_from_file(self, filename):
+        try:
+            with open(filename, 'r') as file:
+                self.items = [line.strip() for line in file]
+        except FileNotFoundError:
+            pass
+
+    def save_to_file(self, filename):
+        with open(filename, 'w') as file:
+            for item in self.items:
+                file.write(item + '\n')
+
+class LoginApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+
+        self.title("Login Page")
+        self.geometry("400x300")
+
+        self.label_username = tk.Label(self, text="Username:")
+        self.label_username.pack(pady=10)
+
+        self.entry_username = tk.Entry(self)
+        self.entry_username.pack(pady=5)
+
+        self.label_password = tk.Label(self, text="Password:")
+        self.label_password.pack(pady=10)
+
+        self.entry_password = tk.Entry(self, show="*")
+        self.entry_password.pack(pady=5)
+
+        self.login_button = tk.Button(self, text="Login", command=self.login)
+        self.login_button.pack(pady=10)
+
+    def login(self):
+        username = self.entry_username.get()
+        password = self.entry_password.get()
+
+        if username == username and password == password:
+            messagebox.showinfo("Login Successful", "Welcome, {}".format(username))
+            self.destroy()
+            grocery_app = GroceryApp(username)
+            grocery_app.mainloop()
+        else:
+            messagebox.showerror("Login Failed", "Invalid username or password")
+
+class GroceryApp(tk.Tk):
+    def __init__(self, username):
+        super().__init__()
+
+        self.title("Grocery Item Chooser")
+        self.geometry("400x300")
+
+        self.username = username
+        self.grocery_list = GroceryList()
+        self.load_grocery_list()
+
+        self.pages = {}
+        self.current_page = None
+
+        self.add_page(ChoosePage)
+        self.add_page(FeedbackPage)
+
+        self.show_page(ChoosePage)
+
+    def add_page(self, page_class):
+        page_name = page_class.__name__
+        page = page_class(self, self.grocery_list, self.username, self.switch_page)
+        self.pages[page_name] = page
+
+    def show_page(self, page_class):
+        page_name = page_class.__name__
+        if self.current_page:
+            self.current_page.pack_forget()
+        self.current_page = self.pages[page_name]
+        self.current_page.pack()
+
+    def switch_page(self, page_class):
+        self.show_page(page_class)
+
+    def load_grocery_list(self):
+        filename = f"{self.username}_grocery_list.txt"
+        self.grocery_list.load_from_file(filename)
+
+    def save_grocery_list(self):
+        filename = f"{self.username}_grocery_list.txt"
+        self.grocery_list.save_to_file(filename)
+
+class ChoosePage(tk.Frame):
+    def __init__(self, master, grocery_list, username, switch_page_callback):
+        super().__init__(master)
+        self.grocery_list = grocery_list
+        self.username = username
+        self.switch_page_callback = switch_page_callback
+
+        self.label = tk.Label(self, text="Choose Your Items")
+        self.label.pack(pady=10)
+
+        self.items = ["Apple", "Banana", "Orange", "Milk", "Bread", "Eggs", "Cheese"]
+
+        self.selected_items = []
+
+        self.checkboxes = []
+        for item in self.items:
+            var = tk.BooleanVar()
+            checkbox = tk.Checkbutton(self, text=item, variable=var)
+            checkbox.pack(anchor='w')
+            self.checkboxes.append((item, var))
+
+        self.select_button = tk.Button(self, text="Select Items", command=self.select_items)
+        self.select_button.pack()
+
+        self.save_button = tk.Button(self, text="Save Selection", command=self.save_selection)
+        self.save_button.pack()
+
+    def select_items(self):
+        self.selected_items = [item[0] for item in self.checkboxes if item[1].get()]
+        messagebox.showinfo("Items Selected", "\n".join(self.selected_items))
+
+    def save_selection(self):
+        self.grocery_list.items = self.selected_items
+        self.grocery_list.save_to_file(f"{self.username}_grocery_list.txt")
+        messagebox.showinfo("Selection Saved", "Selected items saved to file.")
+
+class FeedbackPage(tk.Frame):
+    def __init__(self, master, grocery_list, username, switch_page_callback):
+        super().__init__(master)
+        self.grocery_list = grocery_list
+        self.username = username
+        self.switch_page_callback = switch_page_callback
+
+        self.label = tk.Label(self, text="Feedback")
+if __name__ == "__main__":
+    login_app = LoginApp()
+    login_app.mainloop()
+    FeedbackPage = FeedbackPage()
